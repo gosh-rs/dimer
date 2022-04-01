@@ -1,0 +1,7 @@
+# [[file:dimer.note::9d20e72f][9d20e72f]]
+[tasks.install]
+#command = "env"
+script = '''
+cargo im --root=releases/${CARGO_MAKE_PROJECT_VERSION} --no-track --bins --force
+'''
+# 9d20e72f ends here
