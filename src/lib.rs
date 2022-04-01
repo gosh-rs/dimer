@@ -1,4 +1,5 @@
 // [[file:../dimer.note::c6f8257d][c6f8257d]]
+mod cg;
 mod fourier;
 mod options;
 mod raw;
@@ -42,5 +43,6 @@ pub mod docs {
     export_doc!(options);
     export_doc!(rotation);
     export_doc!(translation);
+    export_doc!(cg);
 }
 // cfd3ba0e ends here
