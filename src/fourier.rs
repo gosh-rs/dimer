@@ -45,7 +45,7 @@ fn get_curvature_by_fourier_series(a0: f64, a1: f64, b1: f64, phi: f64) -> f64 {
 // algo:4 ends here
 
 // [[file:../dimer.note::b2282332][b2282332]]
-pub fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &[f64], f1_prime: &[f64]) -> DVector {
+fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &[f64], f1_prime: &[f64]) -> DVector {
     let f1 = f1.as_vector_slice();
     let f1_prime = f1_prime.as_vector_slice();
     (phi1 - phi_min).sin() / phi1.sin() * f1
@@ -61,6 +61,20 @@ impl DimerState {
         let c0 = self.curvature();
         let c0d = self.curvature_derivative();
         estimate_rotational_angle(c0, c0d)
+    }
+}
+
+impl RawDimer {
+    pub fn get_dimer_trial_rotation_endpoint(&self, n_unit: &[f64], t_unit: &[f64], phi: f64) -> Vec<f64> {
+        // FIXME: rewrite
+        get_dimer_trial_rotation_endpoint(&self.r0, n_unit, t_unit, phi, self.dr)
+            .as_slice()
+            .to_vec()
+    }
+
+    pub fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &[f64], f1_prime: &[f64]) -> Vec<f64> {
+        // FIXME: rewrite
+        get_extrapolated_forces(phi1, phi_min, f1, f1_prime).as_slice().to_vec()
     }
 }
 
