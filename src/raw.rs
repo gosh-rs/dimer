@@ -1,26 +1,26 @@
 // [[file:../dimer.note::d5c73cde][d5c73cde]]
-fn get_dimer_endpoints(r0: &[f64], dr: f64, n: &[f64]) -> [DVector; 2] {
-    let r1 = r0.as_vector_slice() + dr * n.as_vector_slice();
-    let r2 = r0.as_vector_slice() - dr * n.as_vector_slice();
+fn get_dimer_endpoints(r0: &DVector, dr: f64, n: &DVector) -> [DVector; 2] {
+    let r1 = r0 + dr * n;
+    let r2 = r0 - dr * n;
     [r1, r2]
 }
 // d5c73cde ends here
 
 // [[file:../dimer.note::bfde551f][bfde551f]]
-fn compute_dimer_endpoint2_force(f0: &[f64], f1: &[f64]) -> DVector {
-    2.0 * f0.as_vector_slice() - f1.as_vector_slice()
+fn compute_dimer_endpoint2_force(f0: &DVector, f1: &DVector) -> DVector {
+    2.0 * f0 - f1
 }
 // bfde551f ends here
 
-// [[file:../dimer.note::*docs][docs:3]]
-fn compute_rotational_force(f0: &[f64], f1: &[f64], dr: f64) -> DVector {
-    (f1.as_vector_slice() - f0.as_vector_slice()) / dr
+// [[file:../dimer.note::68051c57][68051c57]]
+fn compute_rotational_force(f0: &DVector, f1: &DVector, dr: f64) -> DVector {
+    (f1 - f0) / dr
 }
-// docs:3 ends here
+// 68051c57 ends here
 
 // [[file:../dimer.note::746f3305][746f3305]]
-fn compute_dimer_axis(r0: &[f64], r1: &[f64]) -> DVector {
-    (r1.as_vector_slice() - r0.as_vector_slice()).normalize()
+fn compute_dimer_axis(r0: &DVector, r1: &DVector) -> DVector {
+    (r1 - r0).normalize()
 }
 // 746f3305 ends here
 
@@ -53,20 +53,17 @@ pub struct RawDimer {
     /// Distance between dimer central image 0 and endpoint image 1
     pub dr: f64,
     /// Postions of image 0 in dimer
-    pub r0: Vec<f64>,
+    pub r0: DVector,
     /// Postions of image 1 in dimer
-    pub r1: Vec<f64>,
+    pub r1: DVector,
     /// Forces of image 0 in dimer
-    pub f0: Vec<f64>,
+    pub f0: DVector,
     /// Forces of image 1 in dimer
-    pub f1: Vec<f64>,
-}
-
-impl RawDimer {
-    /// Return position of dimer center
-    pub fn center(&self) -> &[f64] {
-        &self.r0
-    }
+    pub f1: DVector,
+    /// Curvature of dimer to be determined
+    pub c0: Option<f64>,
+    /// Real energy of image R0
+    pub e0: f64,
 }
 // 4648b13c ends here
 
@@ -95,13 +92,13 @@ impl DimerState {
     }
 
     /// The rotational force felt at dimer center
-    pub fn rotational_force(&self) -> &[f64] {
-        self.fr.as_slice()
+    pub fn rotational_force(&self) -> &DVector {
+        &self.fr
     }
 
     /// Return dimer axis direction
-    pub fn dimer_axis(&self) -> &[f64] {
-        self.n.as_slice()
+    pub fn dimer_axis(&self) -> &DVector {
+        &self.n
     }
 }
 // 62d61ee4 ends here

@@ -49,9 +49,7 @@ impl<'a> Dimer<'a> {
 
         // Total rotation angle during rotation steps
         // FIXME: rewrite
-        let state = self.inner.as_ref().unwrap().extrapolate();
-        // let curvature_min = self.get_curvature().expect("dimer rot curvature");
-        let curvature_min = todo!();
+        let curvature_min = self.inner.as_ref().unwrap().c0.unwrap();
         let tau_min = self.orientation.clone();
 
         Ok((curvature_min, tau_min))

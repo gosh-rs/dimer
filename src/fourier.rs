@@ -4,8 +4,8 @@ use super::*;
 
 // [[file:../dimer.note::b4042e0e][b4042e0e]]
 /// Return coordinates of the dimer endpoint `R1` after rotation with a trial angle `phi`.
-pub fn get_dimer_trial_rotation_endpoint(r0: &[f64], n_unit: &[f64], t_unit: &[f64], phi: f64, dr: f64) -> DVector {
-    r0.as_vector_slice() + dr * phi.cos() * n_unit.as_vector_slice() + dr * phi.sin() * t_unit.as_vector_slice()
+fn get_dimer_trial_rotation_endpoint(r0: &DVector, n_unit: &DVector, t_unit: &DVector, phi: f64, dr: f64) -> DVector {
+    r0 + dr * phi.cos() * n_unit + dr * phi.sin() * t_unit
 }
 // b4042e0e ends here
 
@@ -45,9 +45,7 @@ fn get_curvature_by_fourier_series(a0: f64, a1: f64, b1: f64, phi: f64) -> f64 {
 // algo:4 ends here
 
 // [[file:../dimer.note::b2282332][b2282332]]
-fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &[f64], f1_prime: &[f64]) -> DVector {
-    let f1 = f1.as_vector_slice();
-    let f1_prime = f1_prime.as_vector_slice();
+fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &DVector, f1_prime: &DVector) -> DVector {
     (phi1 - phi_min).sin() / phi1.sin() * f1
         + phi_min.sin() / phi1.sin() * f1_prime
         + (1.0 - phi_min.cos() - phi_min.sin() * (0.5 * phi1).tan()) * f1
@@ -65,16 +63,12 @@ impl DimerState {
 }
 
 impl RawDimer {
-    pub fn get_dimer_trial_rotation_endpoint(&self, n_unit: &[f64], t_unit: &[f64], phi: f64) -> Vec<f64> {
-        // FIXME: rewrite
+    pub fn get_dimer_trial_rotation_endpoint(&self, n_unit: &DVector, t_unit: &DVector, phi: f64) -> DVector {
         get_dimer_trial_rotation_endpoint(&self.r0, n_unit, t_unit, phi, self.dr)
-            .as_slice()
-            .to_vec()
     }
 
-    pub fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &[f64], f1_prime: &[f64]) -> Vec<f64> {
-        // FIXME: rewrite
-        get_extrapolated_forces(phi1, phi_min, f1, f1_prime).as_slice().to_vec()
+    pub fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &DVector, f1_prime: &DVector) -> DVector {
+        get_extrapolated_forces(phi1, phi_min, f1, f1_prime)
     }
 }
 

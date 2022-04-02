@@ -37,24 +37,3 @@ pub struct Dimer<'a> {
     inner: Option<RawDimer>,
 }
 // a7df26ce ends here
-
-// [[file:../dimer.note::cfd3ba0e][cfd3ba0e]]
-#[cfg(feature = "adhoc")]
-/// Docs for local mods
-pub mod docs {
-    macro_rules! export_doc {
-        ($l:ident) => {
-            pub mod $l {
-                pub use crate::$l::*;
-            }
-        };
-    }
-
-    export_doc!(raw);
-    export_doc!(fourier);
-    export_doc!(options);
-    export_doc!(rotation);
-    export_doc!(translation);
-    export_doc!(cg);
-}
-// cfd3ba0e ends here

@@ -17,10 +17,9 @@ impl<'a> Dimer<'a> {
         let raw_dimer = self.inner.take().expect("raw dimer for trans");
 
         // re-use the energy and forces evaluated at rotation step
-        // let e0 = raw_dimer.e0;
-        let e0 = todo!();
+        let e0 = raw_dimer.e0;
         // FIXME: rewrite
-        let f0 = &raw_dimer.f0.to_vector();
+        let f0 = &raw_dimer.f0;
 
         // update gradient for dimer translation
         let fall = if c_min.is_sign_positive() {

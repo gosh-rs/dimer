@@ -18,36 +18,36 @@ impl<'a> Dimer<'a> {
         if let Some(mut raw_dimer) = self.inner.take() {
             if !self.vars.use_extrapolated_forces {
                 self.dynamics.set_position(r1.as_slice());
-                let f1 = self.dynamics.get_force()?.to_vec();
-                // FIXME: rewrite
-                let s = f1.to_vector().cosine_similarity(&raw_dimer.f1.to_vector());
+                let f1 = self.dynamics.get_force()?.to_vector();
+                let s = f1.cosine_similarity(&raw_dimer.f1);
                 debug!("similarity between extrapolated force and real force at R1: {}", s);
                 raw_dimer.f1 = f1;
             }
-            // FIXME: rewrite
-            raw_dimer.r1 = r1.as_slice().to_vec();
+            raw_dimer.r1 = r1;
             self.inner = Some(raw_dimer);
         } else {
             self.dynamics.set_position(r0.as_slice());
-            // FIXME: rewrite about e0
             let e0 = self.dynamics.get_energy()?;
-            let f0 = self.dynamics.get_force()?.to_vec();
+            let f0 = self.dynamics.get_force()?.to_vector();
             self.dynamics.set_position(r1.as_slice());
-            let f1 = self.dynamics.get_force()?.to_vec();
+            let f1 = self.dynamics.get_force()?.to_vector();
             // set active atoms weight matrix
             let raw_dimer = RawDimer {
-                r0: r0.as_slice().to_vec(),
-                r1: r1.as_slice().to_vec(),
+                r0,
+                r1,
                 f0,
                 f1,
                 dr,
+                e0,
+                c0: None,
             };
             self.inner = Some(raw_dimer);
         }
 
         // update rotational direction perpendicular to dimer orientation
         let state = self.inner.as_ref().unwrap().extrapolate();
-        let f_rot = state.rotational_force().to_vector();
+        // FIXME: avoid clone
+        let f_rot = state.rotational_force().clone();
         assert!(f_rot.norm() > 0.0, "invalid rotational force: {:?}", &f_rot);
 
         Ok(f_rot)
@@ -96,9 +96,9 @@ impl<'a> Dimer<'a> {
         let c0d = dimer_state.curvature_derivative();
 
         // FIXME: refactor
-        let r1_prime = raw_dimer.get_dimer_trial_rotation_endpoint(&self.orientation.as_slice(), theta.as_slice(), phi1);
+        let r1_prime = raw_dimer.get_dimer_trial_rotation_endpoint(&self.orientation, &theta, phi1);
         self.dynamics.set_position(r1_prime.as_slice());
-        let f1_prime = self.dynamics.get_force()?.to_vec();
+        let f1_prime = self.dynamics.get_force()?.to_vector();
         let mut trial_dimer = raw_dimer.clone();
         trial_dimer.r1 = r1_prime;
         trial_dimer.f1 = f1_prime;
@@ -143,12 +143,13 @@ impl<'a> Dimer<'a> {
 
         // FIXME: refactor
         let f1_min = RawDimer::get_extrapolated_forces(phi1, phi_min, &raw_dimer.f1, &trial_dimer.f1);
-        let r1_min = raw_dimer.get_dimer_trial_rotation_endpoint(self.orientation.as_slice(), theta.as_slice(), phi_min);
+        let r1_min = raw_dimer.get_dimer_trial_rotation_endpoint(&self.orientation, &theta, phi_min);
         raw_dimer.r1 = r1_min;
         raw_dimer.f1 = f1_min;
+        raw_dimer.c0 = curvature_min.into();
         let state = raw_dimer.extrapolate();
         // FIXME: rewrite
-        self.orientation = state.dimer_axis().to_vector();
+        self.orientation = state.dimer_axis().clone();
         self.inner = raw_dimer.clone().into();
 
         let converged = check_dimer_rotation_convergence(phi_min, phi_tol);
