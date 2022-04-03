@@ -4,7 +4,7 @@ use super::*;
 
 // [[file:../dimer.note::b4042e0e][b4042e0e]]
 /// Return coordinates of the dimer endpoint `R1` after rotation with a trial angle `phi`.
-fn get_dimer_trial_rotation_endpoint(r0: &DVector, n_unit: &DVector, t_unit: &DVector, phi: f64, dr: f64) -> DVector {
+fn rotate_dimer_endpoint1(r0: &DVector, n_unit: &DVector, t_unit: &DVector, phi: f64, dr: f64) -> DVector {
     r0 + dr * phi.cos() * n_unit + dr * phi.sin() * t_unit
 }
 // b4042e0e ends here
@@ -45,7 +45,7 @@ fn get_curvature_by_fourier_series(a0: f64, a1: f64, b1: f64, phi: f64) -> f64 {
 // algo:4 ends here
 
 // [[file:../dimer.note::b2282332][b2282332]]
-fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &DVector, f1_prime: &DVector) -> DVector {
+fn get_extrapolated_force(phi1: f64, phi_min: f64, f1: &DVector, f1_prime: &DVector) -> DVector {
     (phi1 - phi_min).sin() / phi1.sin() * f1
         + phi_min.sin() / phi1.sin() * f1_prime
         + (1.0 - phi_min.cos() - phi_min.sin() * (0.5 * phi1).tan()) * f1
@@ -53,7 +53,7 @@ fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &DVector, f1_prime: &DVe
 // b2282332 ends here
 
 // [[file:../dimer.note::c701d372][c701d372]]
-impl DimerState {
+impl RotationState {
     /// Return estimated angle for trial rotation
     pub fn estimated_rotational_angle(&self) -> f64 {
         let c0 = self.curvature();
@@ -63,12 +63,21 @@ impl DimerState {
 }
 
 impl RawDimer {
-    pub fn get_dimer_trial_rotation_endpoint(&self, n_unit: &DVector, t_unit: &DVector, phi: f64) -> DVector {
-        get_dimer_trial_rotation_endpoint(&self.r0, n_unit, t_unit, phi, self.dr)
+    /// Estimate the force F1 at endpoint 1 if rotate the dimer by angle `phi_min`.
+    ///
+    /// # Parameters
+    ///
+    /// * phi1_min: dimer rotation angle
+    /// * phi1: trial rotation angle
+    /// * f1_prime: force vector when trial rotation angle phi = phi1
+    pub fn estimate_force_after_rotation(&self, phi_min: f64, phi1: f64, f1_prime: &DVector) -> DVector {
+        get_extrapolated_force(phi1, phi_min, &self.f1, f1_prime)
     }
 
-    pub fn get_extrapolated_forces(phi1: f64, phi_min: f64, f1: &DVector, f1_prime: &DVector) -> DVector {
-        get_extrapolated_forces(phi1, phi_min, f1, f1_prime)
+    /// Return coordinates of the dimer endpoint `R1` after rotation in
+    /// direction `theta` by angle `phi`.
+    pub fn get_endpoint1_after_rotation(&self, tau: &DVector, theta: &DVector, phi: f64) -> DVector {
+        rotate_dimer_endpoint1(&self.r0, &tau, theta, phi, self.dr)
     }
 }
 
@@ -86,10 +95,10 @@ pub struct FourierRotation {
 impl FourierRotation {
     /// # Parameters
     ///
-    /// * c0: Curvature when phi = 0
-    /// * c0d: Curvature derivative when phi = 0
+    /// * c0: curvature when phi = 0
+    /// * c0d: curvature derivative when phi = 0
     /// * phi1: trial rotation angle
-    /// * c1: Curvature when phi = phi1
+    /// * c1: curvature when phi = phi1
     pub fn new(c0: f64, c0d: f64, phi1: f64, c1: f64) -> Self {
         let (a0, a1, b1) = get_fourier_series_constants(c0, c0d, c1, phi1);
         Self { a0, a1, b1, c0 }

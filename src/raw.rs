@@ -1,5 +1,5 @@
 // [[file:../dimer.note::d5c73cde][d5c73cde]]
-fn get_dimer_endpoints(r0: &DVector, dr: f64, n: &DVector) -> [DVector; 2] {
+fn compute_dimer_endpoints(r0: &DVector, dr: f64, n: &DVector) -> [DVector; 2] {
     let r1 = r0 + dr * n;
     let r2 = r0 - dr * n;
     [r1, r2]
@@ -54,10 +54,10 @@ pub struct RawDimer {
     pub dr: f64,
     /// Postions of image 0 in dimer
     pub r0: DVector,
-    /// Postions of image 1 in dimer
-    pub r1: DVector,
     /// Forces of image 0 in dimer
     pub f0: DVector,
+    /// Postions of image 1 in dimer
+    pub r1: DVector,
     /// Forces of image 1 in dimer
     pub f1: DVector,
     /// Curvature of dimer to be determined
@@ -68,9 +68,10 @@ pub struct RawDimer {
 // 4648b13c ends here
 
 // [[file:../dimer.note::62d61ee4][62d61ee4]]
-/// Represents internal state of a dimer
+/// Represents the second derivative information of dimer potential energy
+/// surface at center R0.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct DimerState {
+pub struct RotationState {
     /// dimer mode curvature
     cx: f64,
     /// Rotational force
@@ -79,7 +80,7 @@ pub struct DimerState {
     n: DVector,
 }
 
-impl DimerState {
+impl RotationState {
     /// Dimer curvature
     pub fn curvature(&self) -> f64 {
         self.cx
@@ -97,7 +98,7 @@ impl DimerState {
     }
 
     /// Return dimer axis direction
-    pub fn dimer_axis(&self) -> &DVector {
+    pub fn curvature_mode(&self) -> &DVector {
         &self.n
     }
 }
@@ -105,12 +106,12 @@ impl DimerState {
 
 // [[file:../dimer.note::02a5a92f][02a5a92f]]
 impl RawDimer {
-    /// Extrapolate other missing dimer properties
-    pub fn extrapolate(&self) -> DimerState {
+    /// Estimate second derivative information at dimer center using finite differencing
+    pub fn extrapolate(&self) -> RotationState {
         let fr = compute_rotational_force(&self.f0, &self.f1, self.dr);
         let n = compute_dimer_axis(&self.r0, &self.r1);
         let cx = compute_dimer_curvature(&fr, &n);
-        DimerState { fr, n, cx }
+        RotationState { fr, n, cx }
     }
 }
 // 02a5a92f ends here
