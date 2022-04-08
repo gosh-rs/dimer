@@ -6,6 +6,9 @@ mod options;
 mod raw;
 mod rotation;
 mod translation;
+
+#[cfg(test)]
+mod test;
 // c6f8257d ends here
 
 // [[file:../dimer.note::1e3853ed][1e3853ed]]

@@ -50,8 +50,6 @@ use super::*;
 // [[file:../dimer.note::4648b13c][4648b13c]]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RawDimer {
-    /// Distance between dimer central image 0 and endpoint image 1
-    pub dr: f64,
     /// Postions of image 0 in dimer
     pub r0: DVector,
     /// Forces of image 0 in dimer
@@ -60,10 +58,6 @@ pub struct RawDimer {
     pub r1: DVector,
     /// Forces of image 1 in dimer
     pub f1: DVector,
-    /// Curvature of dimer to be determined
-    pub c0: Option<f64>,
-    /// Real energy of image R0
-    pub e0: f64,
 }
 // 4648b13c ends here
 
@@ -108,7 +102,8 @@ impl RotationState {
 impl RawDimer {
     /// Estimate second derivative information at dimer center using finite differencing
     pub fn extrapolate(&self) -> RotationState {
-        let fr = compute_rotational_force(&self.f0, &self.f1, self.dr);
+        let dr = (&self.r1 - &self.r0).norm();
+        let fr = compute_rotational_force(&self.f0, &self.f1, dr);
         let n = compute_dimer_axis(&self.r0, &self.r1);
         let cx = compute_dimer_curvature(&fr, &n);
         RotationState { fr, n, cx }

@@ -75,9 +75,11 @@ impl RawDimer {
     }
 
     /// Return coordinates of the dimer endpoint `R1` after rotation in
-    /// direction `theta` by angle `phi`.
+    /// direction `theta` by angle `phi` in the plane spanned by `tau` and
+    /// `theta`.
     pub fn get_endpoint1_after_rotation(&self, tau: &DVector, theta: &DVector, phi: f64) -> DVector {
-        rotate_dimer_endpoint1(&self.r0, &tau, theta, phi, self.dr)
+        let dr = (&self.r1 - &self.r0).norm();
+        rotate_dimer_endpoint1(&self.r0, &tau, theta, phi, dr)
     }
 }
 

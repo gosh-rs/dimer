@@ -32,15 +32,7 @@ impl<'a> Dimer<'a> {
             self.dynamics.set_position(r1.as_slice());
             let f1 = self.dynamics.get_force()?.to_vector();
             // set active atoms weight matrix
-            let raw_dimer = RawDimer {
-                r0,
-                r1,
-                f0,
-                f1,
-                dr,
-                e0,
-                c0: None,
-            };
+            let raw_dimer = RawDimer { r0, r1, f0, f1 };
             self.inner = Some(raw_dimer);
         }
 
@@ -149,7 +141,7 @@ impl<'a> Dimer<'a> {
         let r1_min = raw_dimer.get_endpoint1_after_rotation(&self.orientation, &theta, phi_min);
         raw_dimer.r1 = r1_min;
         raw_dimer.f1 = f1_min;
-        raw_dimer.c0 = curvature_min.into();
+        // raw_dimer.c0 = curvature_min.into();
         self.orientation = raw_dimer.extrapolate().curvature_mode().clone();
         self.inner = raw_dimer.into();
 
@@ -197,7 +189,8 @@ impl<'a> Dimer<'a> {
 
         // Total rotation angle during rotation steps
         // FIXME: rewrite
-        let curvature_min = self.inner.as_ref().unwrap().c0.unwrap();
+        // let curvature_min = self.inner.as_ref().unwrap().c0.unwrap();
+        let curvature_min = todo!();
         let tau_min = self.orientation.clone();
 
         Ok((curvature_min, tau_min))
