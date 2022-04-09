@@ -53,19 +53,6 @@ fn get_extrapolated_force(phi1: f64, phi_min: f64, f1: &DVector, f1_prime: &DVec
 // b2282332 ends here
 
 // [[file:../dimer.note::4e1ae80e][4e1ae80e]]
-impl RawDimer {
-    /// Estimate the force F1 at endpoint 1 if rotate the dimer by angle `phi_min`.
-    ///
-    /// # Parameters
-    ///
-    /// * phi1_min: optimal rotation angle
-    /// * phi1: trial rotation angle
-    /// * f1_prime: force of endpoing 1 when applied trial rotation
-    fn estimate_force_after_rotation(&self, phi_min: f64, phi1: f64, f1_prime: &DVector) -> DVector {
-        get_extrapolated_force(phi1, phi_min, &self.f1, f1_prime)
-    }
-}
-
 struct FourierRotation {
     // Fourier constants
     a0: f64,
@@ -105,6 +92,7 @@ impl FourierRotation {
 
 // [[file:../dimer.note::c701d372][c701d372]]
 /// State variables after Fourier rotation
+#[derive(Debug, Clone)]
 pub struct FourierState {
     /// The minium curvature estimated using Fourier series
     pub curvature_min: f64,
@@ -156,10 +144,11 @@ impl RawDimer {
         let state = self.extrapolate();
         let c0 = state.curvature();
         let c0d = state.curvature_derivative();
+        let f1 = self.f1.clone();
 
         // trial rotation: update dimer with new endpoint1
         self.r1 = r1_prime;
-        self.f1 = f1_prime.clone();
+        self.f1 = f1_prime;
         let c1 = self.extrapolate().curvature();
 
         let fourier_rot = FourierRotation::new(c0, c0d, phi1, c1);
@@ -188,7 +177,7 @@ impl RawDimer {
 
         // estimate force on new endpoint1
         let r1_min = self.get_endpoint1_after_rotation(&n0, &theta, phi_min);
-        let f1_min = self.estimate_force_after_rotation(phi_min, phi1, &f1_prime);
+        let f1_min = get_extrapolated_force(phi1, phi_min, &f1, &self.f1);
 
         FourierState {
             r1_min,
