@@ -29,7 +29,7 @@ pub struct UserOptions {
 
     /// Use extrapolated force on the new dimer endpoint R1 to reduce one
     /// evulation per dimer rotation. Kastner2008JCP
-    pub use_extrapolated_forces: bool,
+    pub use_extrapolated_force: bool,
 
     /// Use Conjugate gradient algorithm to determine the rotation plane,
     /// instead of simple steepest descent direction.
@@ -49,7 +49,7 @@ impl Default for UserOptions {
             use_fixed_rot_angle: true,
             max_num_rot: 5,
             max_num_trans: 100,
-            use_extrapolated_forces: false,
+            use_extrapolated_force: false,
             use_cg_rot: true,
             // DIMER needs a small step size
             max_step_size: 0.1,

@@ -104,9 +104,14 @@ impl RawDimer {
     pub fn extrapolate(&self) -> RotationState {
         let dr = (&self.r1 - &self.r0).norm();
         let fr = compute_rotational_force(&self.f0, &self.f1, dr);
-        let n = compute_dimer_axis(&self.r0, &self.r1);
+        let n = self.dimer_axis();
         let cx = compute_dimer_curvature(&fr, &n);
         RotationState { fr, n, cx }
+    }
+
+    /// Return a normalized vector of dimer axis.
+    pub fn dimer_axis(&self) -> DVector {
+        compute_dimer_axis(&self.r0, &self.r1)
     }
 }
 // 02a5a92f ends here

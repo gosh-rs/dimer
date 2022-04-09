@@ -2,7 +2,6 @@
 use super::*;
 
 use crate::cg::CG;
-use crate::fourier::FourierRotation;
 // 875f7ef9 ends here
 
 // [[file:../dimer.note::1b911cfd][1b911cfd]]
@@ -16,7 +15,7 @@ impl<'a> Dimer<'a> {
 
         // FIXME: convergence test before evaluation
         if let Some(mut raw_dimer) = self.inner.take() {
-            if !self.vars.use_extrapolated_forces {
+            if !self.vars.use_extrapolated_force {
                 self.dynamics.set_position(r1.as_slice());
                 let f1 = self.dynamics.get_force()?.to_vector();
                 let s = f1.cosine_similarity(&raw_dimer.f1);
@@ -38,8 +37,6 @@ impl<'a> Dimer<'a> {
 
         // update rotational direction perpendicular to dimer orientation
         let state = self.inner.as_ref().unwrap().extrapolate();
-        let f_rot = state.rotational_force();
-        assert!(f_rot.norm() > 0.0, "invalid rotational force: {:?}", &f_rot);
 
         Ok(state)
     }
@@ -93,37 +90,9 @@ impl<'a> Dimer<'a> {
         let r1_prime = raw_dimer.get_endpoint1_after_rotation(&self.orientation, &theta, phi1);
         self.dynamics.set_position(r1_prime.as_slice());
         let f1_prime = self.dynamics.get_force()?.to_vector();
-        raw_dimer.r1 = r1_prime;
-        raw_dimer.f1 = f1_prime.clone();
-        let c1 = raw_dimer.extrapolate().curvature();
-
-        // estimate optimal rotation using Fourier series
-        let c0 = dimer_state.curvature();
-        let c0d = dimer_state.curvature_derivative();
-        let fourier_rot = FourierRotation::new(c0, c0d, phi1, c1);
-        let (mut phi_min, mut curvature_min) = fourier_rot.optimal_rotation();
-
-        // If find maximum curvature, the rotation angle has to be increased by 90°
-        // FIXME: 如果f1是插值出来的话, 由于数据误差, 也可能出现下面的情况
-        if curvature_min > c0 {
-            info!("dimer fourier: found maximum curvature: {} > {}", curvature_min, c0);
-            if !self.vars.use_extrapolated_forces {
-                phi_min = phi_min + PI / 2.0;
-                // update curvature in new position
-                curvature_min = fourier_rot.curvature(phi_min);
-            } else {
-                // FIXME: 如果真能使curvature变小才加90度
-                warn!("using extrapolated forces is not reliable for testing curvature minimum/maximum");
-                let phi = phi_min + PI / 2.0;
-                let c_min_prime = fourier_rot.curvature(phi);
-                dbg!(c0, curvature_min, c_min_prime);
-                if c_min_prime < c0 && c_min_prime < curvature_min {
-                    phi_min = phi;
-                    curvature_min = c_min_prime;
-                }
-            }
-        }
-
+        let fourier_state = raw_dimer.fourier_rotate(r1_prime, f1_prime, phi1, theta, self.vars.use_extrapolated_force);
+        let phi_min = fourier_state.phi_min;
+        let curvature_min = fourier_state.curvature_min;
         info!(
             "{:^15}{:^15}{:^15}{:^15}",
             "phi_est/deg", "phi_trial/deg", "phi_min/deg", "c_min"
@@ -136,11 +105,8 @@ impl<'a> Dimer<'a> {
             curvature_min
         );
 
-        let f1_min = raw_dimer.estimate_force_after_rotation(phi_min, phi1, &f1_prime);
-        // FIXME: think about dimer axis
-        let r1_min = raw_dimer.get_endpoint1_after_rotation(&self.orientation, &theta, phi_min);
-        raw_dimer.r1 = r1_min;
-        raw_dimer.f1 = f1_min;
+        raw_dimer.r1 = fourier_state.r1_min;
+        raw_dimer.f1 = fourier_state.f1_min;
         // raw_dimer.c0 = curvature_min.into();
         self.orientation = raw_dimer.extrapolate().curvature_mode().clone();
         self.inner = raw_dimer.into();
@@ -176,7 +142,9 @@ impl<'a> Dimer<'a> {
                 self.vars.trial_rot_angle.min(phi_est)
             };
             // rotate the dimer in optimal direction
-            let theta = self.get_rotational_direction(state.rotational_force(), &mut cg);
+            let f_rot = state.rotational_force();
+            assert!(f_rot.norm() > 0.0, "invalid rotational force: {:?}", &f_rot);
+            let theta = self.get_rotational_direction(f_rot, &mut cg);
             self.next_rotation(&state, &theta, phi1, phi_est)?;
             if niter >= n_max_rot {
                 info!("Max allowed iterations reached");
