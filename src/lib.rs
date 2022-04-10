@@ -36,8 +36,6 @@ pub struct Dimer<'a> {
     orientation: DVector,
     /// position vector of dimer center
     center: DVector,
-    /// raw dimer struct
-    inner: Option<RawDimer>,
 }
 
 impl<'a> Dimer<'a> {
@@ -51,7 +49,6 @@ impl<'a> Dimer<'a> {
             dynamics,
             orientation,
             vars: UserOptions::default(),
-            inner: None,
         }
     }
 }

@@ -19,11 +19,12 @@ pub struct DimerOutput {
     pub curvature_mode: Vec<f64>,
 }
 
+/// Main entry point for DIMER optimization
 impl<'a> Dimer<'a> {
     /// Carry out optimization in Dimer algorithm, and return the total energy and forces.
-    pub fn optimize(&mut self) -> Result<DimerOutput> {
-        let (c_min, t_min) = self.get_optimal_rotation(self.vars.max_num_rot)?;
-        let (total_energy, fmax_real, fall) = self.next_translation_step(c_min, &t_min)?;
+    pub fn optimize_rotation_and_translation(&mut self) -> Result<DimerOutput> {
+        let (mut raw_dimer, c_min) = self.get_optimal_rotation(self.vars.max_num_rot)?;
+        let (total_energy, fmax_real, fall) = self.next_translation_step(&mut raw_dimer, c_min)?;
         let total_forces = fall.as_slice().to_vec();
         // let fmax = total_forces.iter().map(|x| x.vec2norm()).float_max();
         let fmax = todo!();
@@ -34,7 +35,7 @@ impl<'a> Dimer<'a> {
             fmax,
             fmax_real,
             curvature: c_min,
-            curvature_mode: t_min.as_slice().to_vec(),
+            curvature_mode: self.orientation.as_slice().to_vec(),
         })
     }
 }
