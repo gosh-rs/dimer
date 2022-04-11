@@ -31,7 +31,6 @@ fn test_dimer_opt() -> Result<()> {
     let mut dimer = Dimer::new(center.as_flat(), orientation.as_flat(), pot);
     dimer.vars.min_rot_angle = 1f64.to_radians();
     dimer.vars.max_num_rot = 10;
-    dimer.vars.max_num_trans = 50;
     dimer.vars.use_extrapolated_force = false;
     dimer.vars.use_fixed_rot_angle = true;
     dimer.vars.use_cg_rot = false;

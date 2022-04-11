@@ -14,18 +14,18 @@ mod test;
 // [[file:../dimer.note::1e3853ed][1e3853ed]]
 // #![deny(warnings)]
 
-use gosh::optim::{Dynamics, EvaluateEnergyForce};
+use gosh::optim::Dynamics;
 use gut::prelude::*;
 use std::f64::consts::PI;
 use vecfx::*;
 
 type DVector = nalgebra::DVector<f64>;
 
-pub use options::UserOptions;
 use raw::*;
 // 1e3853ed ends here
 
 // [[file:../dimer.note::a7df26ce][a7df26ce]]
+/// Main entry point for DIMER algorithm
 pub struct Dimer<'a> {
     /// Potential for evaluation energy and forces
     dynamics: Dynamics<'a>,
@@ -55,6 +55,8 @@ impl<'a> Dimer<'a> {
 }
 
 pub use crate::dimer::*;
+pub use gosh::optim::EvaluateEnergyForce;
+pub use options::UserOptions;
 // a7df26ce ends here
 
 // [[file:../dimer.note::cfd3ba0e][cfd3ba0e]]
