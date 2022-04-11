@@ -3,38 +3,31 @@ use super::*;
 // 782181ce ends here
 
 // [[file:../dimer.note::df98a463][df98a463]]
-// 主要用于优化收敛控制
+/// Optimized results in DIMER algorithm
 pub struct DimerOutput {
-    /// DIMER energy, which is also equal to real energy
+    /// DIMER energy, which is equal to potential energy when at dimer center.
     pub total_energy: f64,
-    /// DIMER forces on projection
-    pub total_forces: Vec<f64>,
-    /// DIMER force norm criterion
-    pub fmax: f64,
-    /// Real forces without DIMER projection
-    pub fmax_real: f64,
-    /// Lowest curvature
+    /// The effective force felt at dimer center (modified force for DIMER translation)
+    pub effective_force: Vec<f64>,
+    /// The optimized lowest curvature
     pub curvature: f64,
-    /// Lowest curvature mode
+    /// The optimized lowest curvature mode
     pub curvature_mode: Vec<f64>,
 }
 
 /// Main entry point for DIMER optimization
 impl<'a> Dimer<'a> {
     /// Carry out optimization in Dimer algorithm, and return the total energy and forces.
-    pub fn optimize_rotation_and_translation(&mut self) -> Result<DimerOutput> {
-        let (mut raw_dimer, c_min) = self.get_optimal_rotation(self.vars.max_num_rot)?;
-        let (total_energy, fmax_real, fall) = self.next_translation_step(&mut raw_dimer, c_min)?;
-        let total_forces = fall.as_slice().to_vec();
-        // let fmax = total_forces.iter().map(|x| x.vec2norm()).float_max();
-        let fmax = todo!();
+    pub fn evaluate(&mut self) -> Result<DimerOutput> {
+        let rotation = self.next_rotation_step(self.vars.max_num_rot)?;
+        let mut raw_dimer = rotation.raw_dimer;
+        let c_min = rotation.curvature_min;
+        let effective_force = self.next_translation_step(&mut raw_dimer, c_min).as_slice().to_vec();
 
         Ok(DimerOutput {
-            total_energy,
-            total_forces,
-            fmax,
-            fmax_real,
+            effective_force,
             curvature: c_min,
+            total_energy: rotation.energy,
             curvature_mode: self.orientation.as_slice().to_vec(),
         })
     }

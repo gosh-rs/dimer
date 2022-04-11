@@ -52,6 +52,8 @@ impl<'a> Dimer<'a> {
         }
     }
 }
+
+pub use dimer::*;
 // a7df26ce ends here
 
 // [[file:../dimer.note::cfd3ba0e][cfd3ba0e]]

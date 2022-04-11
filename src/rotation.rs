@@ -7,19 +7,18 @@ use crate::cg::CG;
 // [[file:../dimer.note::1b911cfd][1b911cfd]]
 impl<'a> Dimer<'a> {
     /// Rebuild `RawDimer` from start (updating center and endpoint 1)
-    fn reinitialize(&mut self) -> Result<RawDimer> {
+    fn reinitialize(&mut self) -> Result<(RawDimer, f64)> {
         let dr = self.vars.distance;
         let r0 = self.center.clone();
         let r1 = &r0 + dr * &self.orientation;
 
         self.dynamics.set_position(r0.as_slice());
         let f0 = self.dynamics.get_force()?.to_vector();
-        // FIXME: about dimer center point energy
-        // let e0 = self.dynamics.get_energy()?;
+        let e0 = self.dynamics.get_energy()?;
         self.dynamics.set_position(r1.as_slice());
         let f1 = self.dynamics.get_force()?.to_vector();
         let raw_dimer = RawDimer { r0, r1, f0, f1 };
-        Ok(raw_dimer)
+        Ok((raw_dimer, e0))
     }
 }
 // 1b911cfd ends here
@@ -61,11 +60,11 @@ impl<'a> Dimer<'a> {
     ///
     /// # Parameters
     ///
-    /// * dimer_state: current state before trial rotation
+    /// * raw_dimer: RawDimer to be rotated
     /// * theta: rotation direction
     /// * phi1: trial rotation angle
     ///
-    fn next_rotation(&mut self, raw_dimer: &mut RawDimer, theta: &DVector, phi1: f64, phi_est: f64) -> Result<f64> {
+    fn rotate_dimer_within(&mut self, raw_dimer: &mut RawDimer, theta: &DVector, phi1: f64, phi_est: f64) -> Result<f64> {
         // get endpoint 1 (R1, F1) after trial rotation
         let r1_prime = raw_dimer.get_endpoint1_after_rotation(&self.orientation, &theta, phi1);
         self.dynamics.set_position(r1_prime.as_slice());
@@ -75,7 +74,7 @@ impl<'a> Dimer<'a> {
         let curvature_min = fourier_state.curvature_min;
         info!(
             "{:^15}{:^15}{:^15}{:^15}",
-            "phi_est/deg", "phi_trial/deg", "phi_min/deg", "c_min"
+            "phi_est/deg", "phi_trial/deg", "phi_min/deg", "c_min_est"
         );
         info!(
             "{:^15.2}{:^15.2}{:^15.2}{:^-15.3}",
@@ -94,15 +93,25 @@ impl<'a> Dimer<'a> {
 // 69cb7fbe ends here
 
 // [[file:../dimer.note::45c98025][45c98025]]
+#[derive(Debug, Clone)]
+pub struct RotationOutput {
+    pub raw_dimer: RawDimer,
+    /// The potential energy evaluated at dimer center
+    pub energy: f64,
+    /// The optimized curvature
+    pub curvature_min: f64,
+}
+
 /// The part for DIMER rotation
 impl<'a> Dimer<'a> {
     /// Rotate the dimer axis into the lowest curvature mode of the potential
     /// energy at the dimer center. Return optimized curvature value on success.
-    pub fn get_optimal_rotation(&mut self, n_max_rot: usize) -> Result<(RawDimer, f64)> {
+    pub fn next_rotation_step(&mut self, n_max_rot: usize) -> Result<RotationOutput> {
+        let tau_ini = self.orientation.clone();
         let phi_tol = self.vars.min_rot_angle;
 
         let mut cg = CG::default();
-        let mut raw_dimer = self.reinitialize()?;
+        let (mut raw_dimer, e0) = self.reinitialize()?;
         // save the state before trial rotation
         let mut state = raw_dimer.extrapolate();
         let mut curvature_min = state.curvature();
@@ -134,7 +143,7 @@ impl<'a> Dimer<'a> {
             let f_rot = state.rotational_force();
             assert!(f_rot.norm() > 0.0, "invalid rotational force: {:?}", &f_rot);
             let theta = self.get_rotational_direction(f_rot, &mut cg);
-            self.next_rotation(&mut raw_dimer, &theta, phi1, phi_est)?;
+            let curvature_min_est = self.rotate_dimer_within(&mut raw_dimer, &theta, phi1, phi_est)?;
             // update extrapolated force of endpint `1` if necessary
             if !self.vars.use_extrapolated_force {
                 self.dynamics.set_position(raw_dimer.r1.as_slice());
@@ -145,16 +154,22 @@ impl<'a> Dimer<'a> {
             }
             // update dimer state after rotation
             state = raw_dimer.extrapolate();
+            // update current dimer orientation, important for translation step
+            self.orientation = state.curvature_mode().clone();
+            // recalculate curvature
+            curvature_min = state.curvature();
+            info!("{curvature_min}..{curvature_min_est}");
         }
-        curvature_min = state.curvature();
-        let tau_min = state.curvature_mode();
         // Total rotation angle during rotation steps
-        let phi = self.orientation.cosine_similarity(tau_min).acos();
-        info!("Total rotational angle = {:.2}°; c_min = {curvature_min}", phi.to_degrees());
-        // update current dimer orientation, important for translation step
-        self.orientation = tau_min.clone();
+        let phi = self.orientation.cosine_similarity(&tau_ini).acos().to_degrees();
+        info!("Total rotational angle = {phi:.2}°; optimized curvature = {curvature_min}");
 
-        Ok((raw_dimer, curvature_min))
+        let out = RotationOutput {
+            raw_dimer,
+            curvature_min,
+            energy: e0,
+        };
+        Ok(out)
     }
 }
 // 45c98025 ends here
