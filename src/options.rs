@@ -24,9 +24,6 @@ pub struct UserOptions {
     /// Maximum number of rotation steps allowed in iteratons.
     pub max_num_rot: usize,
 
-    /// Max number of translation steps allowed in iterations.
-    pub max_num_trans: usize,
-
     /// Use extrapolated force on the new dimer endpoint R1 to reduce one
     /// evulation per dimer rotation. Kastner2008JCP
     pub use_extrapolated_force: bool,
@@ -34,9 +31,6 @@ pub struct UserOptions {
     /// Use Conjugate gradient algorithm to determine the rotation plane,
     /// instead of simple steepest descent direction.
     pub use_cg_rot: bool,
-
-    /// max step size in optimization (translation)
-    pub max_step_size: f64,
 }
 
 impl Default for UserOptions {
@@ -48,11 +42,8 @@ impl Default for UserOptions {
             trial_rot_angle: PI / 4.0,
             use_fixed_rot_angle: true,
             max_num_rot: 5,
-            max_num_trans: 100,
             use_extrapolated_force: false,
             use_cg_rot: true,
-            // DIMER needs a small step size
-            max_step_size: 0.1,
         }
     }
 }
