@@ -1,7 +1,7 @@
 # [[file:dimer.note::17ae940c][17ae940c]]
 [package]
 name = "dimer"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 authors = ["Wenping Guo <ybyygu@gmail.com>"]
 

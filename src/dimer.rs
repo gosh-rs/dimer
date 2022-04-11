@@ -15,7 +15,7 @@ pub struct DimerOutput {
     pub curvature_mode: Vec<f64>,
 }
 
-/// Main entry point for DIMER optimization
+/// Main entry point for DIMER algorithm.
 impl<'a> Dimer<'a> {
     /// Carry out optimization in Dimer algorithm, and return the total energy and forces.
     pub fn evaluate(&mut self) -> Result<DimerOutput> {

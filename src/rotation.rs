@@ -93,6 +93,7 @@ impl<'a> Dimer<'a> {
 // 69cb7fbe ends here
 
 // [[file:../dimer.note::45c98025][45c98025]]
+/// Represents the results obtained in rotation step
 #[derive(Debug, Clone)]
 pub struct RotationOutput {
     pub raw_dimer: RawDimer,
@@ -100,13 +101,15 @@ pub struct RotationOutput {
     pub energy: f64,
     /// The optimized curvature
     pub curvature_min: f64,
+    /// The number of iterations used in rotation step
+    pub n_iterations: usize,
 }
 
 /// The part for DIMER rotation
 impl<'a> Dimer<'a> {
     /// Rotate the dimer axis into the lowest curvature mode of the potential
-    /// energy at the dimer center. Return optimized curvature value on success.
-    pub fn next_rotation_step(&mut self, n_max_rot: usize) -> Result<RotationOutput> {
+    /// energy at the dimer center estimated in Fourier series.
+    pub(crate) fn next_rotation_step(&mut self, n_max_rot: usize) -> Result<RotationOutput> {
         let tau_ini = self.orientation.clone();
         let phi_tol = self.vars.min_rot_angle;
 
@@ -115,7 +118,9 @@ impl<'a> Dimer<'a> {
         // save the state before trial rotation
         let mut state = raw_dimer.extrapolate();
         let mut curvature_min = state.curvature();
-        for niter in 1.. {
+        let mut niter = 0;
+        loop {
+            niter += 1;
             info!("dimer rotation iteration {niter}");
             // avoid trial rotation if estimated rotational angle `phi_est` is small
             // enough (Eq32 Heyden2005JCP)
@@ -127,7 +132,7 @@ impl<'a> Dimer<'a> {
                     break;
                 }
                 (false, true) => {
-                    warn!("Max allowed iterations reached, but dimer rotation not converged yet.");
+                    warn!("Max allowed iterations {n_max_rot} reached, but dimer rotation not converged yet.");
                     break;
                 }
                 (false, false) => {}
@@ -144,21 +149,22 @@ impl<'a> Dimer<'a> {
             assert!(f_rot.norm() > 0.0, "invalid rotational force: {:?}", &f_rot);
             let theta = self.get_rotational_direction(f_rot, &mut cg);
             let curvature_min_est = self.rotate_dimer_within(&mut raw_dimer, &theta, phi1, phi_est)?;
-            // update extrapolated force of endpint `1` if necessary
+            // Update extrapolated force of endpint `1` if necessary
             if !self.vars.use_extrapolated_force {
                 self.dynamics.set_position(raw_dimer.r1.as_slice());
                 let f1 = self.dynamics.get_force()?.to_vector();
                 let s = f1.cosine_similarity(&raw_dimer.f1);
-                debug!("similarity between extrapolated force and real force at R1: {}", s);
+                debug!("similarity between extrapolated force and real force of endpoint 1: {}", s);
                 raw_dimer.f1 = f1;
             }
-            // update dimer state after rotation
+            // Update dimer state after rotation
             state = raw_dimer.extrapolate();
-            // update current dimer orientation, important for translation step
+            // Update current dimer orientation, important for translation step
             self.orientation = state.curvature_mode().clone();
-            // recalculate curvature
+            // Recalculate curvature. If we do not use extrapolated f1, the
+            // curvature_min should be updated with more accurate number
             curvature_min = state.curvature();
-            info!("{curvature_min}..{curvature_min_est}");
+            debug!("real curvature vs estimated curvature: {curvature_min} vs. {curvature_min_est}");
         }
         // Total rotation angle during rotation steps
         let phi = self.orientation.cosine_similarity(&tau_ini).acos().to_degrees();
@@ -168,6 +174,7 @@ impl<'a> Dimer<'a> {
             raw_dimer,
             curvature_min,
             energy: e0,
+            n_iterations: niter,
         };
         Ok(out)
     }

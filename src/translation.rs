@@ -12,7 +12,7 @@ impl<'a> Dimer<'a> {
     ///
     /// * c_min: optimized curvature value in rotation step
     ///
-    pub fn next_translation_step(&mut self, raw_dimer: &mut RawDimer, c_min: f64) -> DVector {
+    pub(crate) fn next_translation_step(&mut self, raw_dimer: &mut RawDimer, c_min: f64) -> DVector {
         // re-use the energy and forces evaluated at rotation step
         let f0 = &raw_dimer.f0;
         let t_min = &self.orientation;

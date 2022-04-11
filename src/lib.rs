@@ -30,12 +30,13 @@ pub struct Dimer<'a> {
     /// Potential for evaluation energy and forces
     dynamics: Dynamics<'a>,
 
-    /// Dimer algorithm parameters
-    vars: UserOptions,
     /// dimer orientation unit vector
     orientation: DVector,
     /// position vector of dimer center
     center: DVector,
+
+    /// Dimer algorithm parameters
+    pub vars: UserOptions,
 }
 
 impl<'a> Dimer<'a> {
@@ -53,7 +54,7 @@ impl<'a> Dimer<'a> {
     }
 }
 
-pub use dimer::*;
+pub use crate::dimer::*;
 // a7df26ce ends here
 
 // [[file:../dimer.note::cfd3ba0e][cfd3ba0e]]

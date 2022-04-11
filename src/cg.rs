@@ -2,8 +2,8 @@
 //! Implementation of the Conjugate Gradient (CG) optimization algorithm
 //!
 //! # References
-//! - https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method
-//! - https://github.com/siesta-project/flos/blob/master/flos/optima/cg.lua
+//! - <https://en.wikipedia.org/wiki/Nonlinear_conjugate_gradient_method>
+//! - <https://github.com/siesta-project/flos/blob/master/flos/optima/cg.lua>
 
 use super::*;
 use vecfx::*;
