@@ -98,9 +98,9 @@ pub struct FourierState {
     pub curvature_min: f64,
     /// The rotation angle corresponding to minimum curvature mode
     pub phi_min: f64,
-    /// The position of endpoint1 when optimal rotation applied
+    /// The position of endpoint `1` when optimal rotation applied
     pub r1_min: DVector,
-    /// Extrapolated force of endpoint1 when optimal rotation applied
+    /// Extrapolated force of endpoint `1` when optimal rotation applied
     pub f1_min: DVector,
 }
 
@@ -126,8 +126,8 @@ impl RawDimer {
     ///
     /// # Parameters
     ///
-    /// * r1_prime: position of endpoint1 in trial rotation
-    /// * f1_prime: force of endpoint1 in trial rotation
+    /// * r1_prime: position of endpoint `1` in trial rotation
+    /// * f1_prime: force of endpoint `1` in trial rotation
     /// * phi1: trial rotation angle applied
     /// * theta: rotation direction
     /// * extrapolated_force: if f1 is extrapolated

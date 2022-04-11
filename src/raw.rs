@@ -48,6 +48,7 @@ use super::*;
 // de6e084c ends here
 
 // [[file:../dimer.note::4648b13c][4648b13c]]
+/// Represents a raw dimer with a center `0` and an endpoint `1`
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RawDimer {
     /// Postions of image 0 in dimer
@@ -63,7 +64,7 @@ pub struct RawDimer {
 
 // [[file:../dimer.note::62d61ee4][62d61ee4]]
 /// Represents the second derivative information of dimer potential energy
-/// surface at center R0.
+/// surface at center `0`.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct RotationState {
     /// dimer mode curvature
